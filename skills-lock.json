@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "skills": {
+    "game-ui-frontend": {
+      "source": "openai/plugins",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "plugins/game-studio/skills/game-ui-frontend/SKILL.md",
+      "computedHash": "83f21277bfaa8427d7f0e67220885d6c04319c0b6cb1f7196186aaba293e8f88"
+    },
+    "gamified-app": {
+      "source": "nexu-io/open-design",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "design-templates/gamified-app/SKILL.md",
+      "computedHash": "60527eb6e4fd2d634bcc0fc685126be0c1020fb7debf8d2db521259021dd383b"
+    }
+  }
+}
