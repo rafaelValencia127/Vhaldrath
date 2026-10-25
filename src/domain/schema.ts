@@ -83,11 +83,16 @@ const base = {
   at: z.string().datetime(),
 };
 
-export const evidenceSchema = z.object({
-  kind: z.enum(['link', 'text', 'file']),
-  value: z.string().min(1),
-  name: z.string().optional(),
-});
+export const LINK_PATTERN = /^https?:\/\/\S+\.\S+/;
+
+// The link rule lives in the schema so imported backups and synced rows obey it too.
+export const evidenceSchema = z
+  .object({
+    kind: z.enum(['link', 'text', 'file']),
+    value: z.string().min(1).max(4000),
+    name: z.string().max(200).optional(),
+  })
+  .refine((e) => e.kind !== 'link' || LINK_PATTERN.test(e.value), { message: 'Links must start with http:// or https://' });
 export type Evidence = z.infer<typeof evidenceSchema>;
 
 export const eventSchema = z.discriminatedUnion('type', [

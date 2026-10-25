@@ -1,7 +1,7 @@
 import { completionReward, timeRates } from './economy';
 import type { GameState } from './derive';
 import type { EventContext } from './events';
-import type { ClassDef, EventOf, Evidence } from './schema';
+import { LINK_PATTERN, type ClassDef, type EventOf, type Evidence } from './schema';
 
 // Commands validate intent against the current state and return the event to append.
 export type CommandResult<T> = { ok: true; event: T } | { ok: false; error: string };
@@ -49,7 +49,7 @@ export function addEvidence(
   if (!questOf(state, classId, questId)) return fail('Unknown quest.');
   const value = evidence.value.trim();
   if (!value) return fail('Evidence cannot be empty.');
-  if (evidence.kind === 'link' && !/^https?:\/\/\S+\.\S+/.test(value)) {
+  if (evidence.kind === 'link' && !LINK_PATTERN.test(value)) {
     return fail('Links must start with http:// or https://');
   }
   return ok({ id: ctx.id, at: ctx.now, type: 'evidence_added', classId, questId, evidence: { ...evidence, value } });

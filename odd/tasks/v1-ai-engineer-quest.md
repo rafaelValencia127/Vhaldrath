@@ -18,14 +18,14 @@ Design: `docs/superpowers/specs/2026-10-24-my-life-as-rpg-design.md` · Flows: F
 
 | ID | Task | Specs | Route | Status | Commit |
 |----|------|-------|-------|--------|--------|
-| T1 | Scaffold Vite+React+TS+Vitest, docs, gitignore | — | inline | pending | |
-| T2 | Domain: class schema, events, deriveState, commands + tests | S3 S5 S6 S8 | inline | pending | |
-| T3 | Content: AI Engineer class seed | S7 | inline | pending | |
-| T4 | Local persistence + JSON export/import + tests | S4 S8 | inline | pending | |
-| T5 | Tile atlas (Kenney CC0, used tiles only) + Warlock recolor + map generator + canvas renderer | S2 | inline | pending | |
-| T6 | UI: hub, map screen, quest drawer, celebrations, settings | S1 S2 S3 S9 | inline | pending | |
-| T7 | Supabase: auth, event sync, evidence storage, SQL + RLS, README setup | S4 | inline | pending | |
-| T8 | Verification: tests, build, browser check | all | inline | pending | |
+| T1 | Scaffold Vite+React+TS+Vitest, docs, gitignore | — | inline | done | e1483ca |
+| T2 | Domain: class schema, events, deriveState, commands + tests | S3 S5 S6 S8 | inline | done (RED: missing modules → GREEN 20/20) | e1483ca |
+| T3 | Content: AI Engineer class seed | S7 | inline | done (4 tests) | e1483ca |
+| T4 | Local persistence + JSON export/import + tests | S4 S8 | inline | done (6 tests, incl. reload demo) | d333026 |
+| T5 | Tile atlas (Kenney CC0, used tiles only) + Warlock recolor + map generator + canvas renderer | S2 | inline | done (3 tests + PNG preview) | e694a88, d333026 |
+| T6 | UI: hub, map screen, quest drawer, celebrations, settings | S1 S2 S3 S9 | inline | done (3 UI tests) | d333026 |
+| T7 | Supabase: auth, event sync, evidence storage, SQL + RLS, README setup | S4 | inline | done (3 sync tests); live Supabase untested — needs user's project | 333031b |
+| T8 | Verification: tests, build, browser check, security verifier | all | inline + verifier | done: 40/40 tests, tsc + build ok, verifier 0 blockers (4 advisories applied); browser check NOT done (Chrome extension timed out on every page) | see Log L6 |
 
 Route evidence: one coherent app built in sequence; units depend on the domain contract, so no parallel writer reason applies.
 
@@ -35,3 +35,5 @@ Route evidence: one coherent app built in sequence; units depend on the domain c
 - L2 (2026-10-21, user, MVP scope): "dashboard, world map, complete quests with evidence and sync"
 - L3 (2026-10-24, user): "at moment i can't read all the changes please do in auto changes until I say stop continue and create all you ehink is necessary"
 - L4: Decisions recorded in the design doc and Flowdocs; undo-dependents decision taken by delegation.
+- L5 (2026-10-24): Risk item 2 (auth, RLS, storage) → independent verifier. Verdict: no blockers. Applied: per-user composite key + payload/id check + payload size cap, link rule in evidenceSchema, bucket limits re-applied on re-run, pull rejects id mismatch.
+- L6 (2026-10-24): Open follow-ups (v2): shared-browser sign-in uploads the previous user's local events to the new account (tag save with owner uid); storage delete policy + remove file when evidence is removed; MIME is declared, not sniffed. Live Supabase/Google login untested until the user creates the project. Manual browser check pending.

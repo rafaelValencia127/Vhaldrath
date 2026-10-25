@@ -75,6 +75,13 @@ describe('JSON backup', () => {
     expect(store.getSnapshot().game.classes['ai-engineer']!.xp).toBe(60);
   });
 
+  it('skips imported link evidence that is not http(s)', () => {
+    const bad = { id: 'x1', at: '2026-10-20T10:00:00.000Z', type: 'evidence_added', classId: 'ai-engineer', questId: 'week-01', evidence: { kind: 'link', value: 'javascript:alert(1)' } };
+    const r = importBackup(JSON.stringify({ app: 'my-life-as-rpg', version: 1, events: [bad] }), []);
+    expect(r.ok && r.added).toBe(0);
+    expect(r.ok && r.skipped).toBe(1);
+  });
+
   it('rejects files that are not backups', () => {
     expect(importBackup('nope', []).ok).toBe(false);
     const r = importBackup(JSON.stringify({ app: 'other', version: 1, events: [] }), []);

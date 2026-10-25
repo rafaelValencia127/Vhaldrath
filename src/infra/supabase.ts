@@ -16,7 +16,7 @@ export function remoteEventsFor(client: SupabaseClient, session: Session): Remot
     async push(events) {
       for (let i = 0; i < events.length; i += PAGE) {
         const rows = events.slice(i, i + PAGE).map((e) => ({ id: e.id, user_id: userId, at: e.at, type: e.type, payload: e }));
-        const { error } = await client.from('game_events').upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+        const { error } = await client.from('game_events').upsert(rows, { onConflict: 'user_id,id', ignoreDuplicates: true });
         if (error) throw new Error(error.message);
       }
     },
@@ -25,14 +25,14 @@ export function remoteEventsFor(client: SupabaseClient, session: Session): Remot
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await client
           .from('game_events')
-          .select('payload')
+          .select('id, payload')
           .order('at', { ascending: true })
           .order('id', { ascending: true })
           .range(from, from + PAGE - 1);
         if (error) throw new Error(error.message);
         for (const row of data ?? []) {
           const parsed = eventSchema.safeParse(row.payload);
-          if (parsed.success) out.push(parsed.data);
+          if (parsed.success && parsed.data.id === row.id) out.push(parsed.data);
         }
         if (!data || data.length < PAGE) return out;
       }
