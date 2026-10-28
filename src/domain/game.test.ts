@@ -3,7 +3,7 @@ import { addEvidence, completeQuest, logSession, removeEvidence, undoQuest, upda
 import { deriveGame } from './derive';
 import { mergeEvents } from './events';
 import { eventSchema } from './schema';
-import { must, resetClock, testClass, tick, type Log } from './test-fixtures';
+import { must, resetClock, testCatalog, testClass, tick, type Log } from './test-fixtures';
 
 const classes = [testClass];
 
@@ -265,5 +265,98 @@ describe('skill snapshots', () => {
     const old = { id: 'x1', at: '2026-10-20T10:00:00.000Z', type: 'quest_completed', classId: 'test', questId: 'a', xp: 60, gold: 30, stats: {} };
     expect(eventSchema.safeParse(old).success).toBe(true);
     expect(eventSchema.safeParse({ ...old, skills: [''] }).success).toBe(false);
+  });
+});
+
+describe('skills', () => {
+  const sheet = (log: Log, defs = classes) => deriveGame(defs, log, testCatalog);
+  const lastCompletion = (log: Log) => log.filter((e) => e.type === 'quest_completed').at(-1)!;
+
+  it('completion credits every tag in full', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    let g = sheet(log);
+    expect(g.skills.python!.xp).toBe(60);
+    expect(g.skills.python!.level).toBe(1);
+    completeWithEvidence(log, 'b');
+    g = sheet(log);
+    expect(g.skills.python).toMatchObject({ xp: 120, level: 2, xpIntoLevel: 20, xpForNextLevel: 130, title: 'Pythonista' });
+    expect(g.skills.ml!.xp).toBe(60);
+    expect(g.areas.eng!.xp).toBe(180);
+  });
+
+  it('boss completion', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    completeWithEvidence(log, 'b');
+    completeWithEvidence(log, 'boss1');
+    expect(sheet(log).skills.ml).toMatchObject({ xp: 240, level: 3, xpIntoLevel: 10 });
+  });
+
+  it('sessions credit tags and respect the hour cap', () => {
+    const log: Log = [];
+    play(log, (g) => must(logSession(g, testClass, 'a', 5, undefined, tick())));
+    expect(sheet(log).skills.python!.xp).toBe(20);
+    play(log, (g) => must(logSession(g, testClass, 'a', 20, undefined, tick())));
+    expect(sheet(log).skills.python!.xp).toBe(60);
+  });
+
+  it('undo removes only the completion share', () => {
+    const log: Log = [];
+    play(log, (g) => must(logSession(g, testClass, 'a', 5, undefined, tick())));
+    completeWithEvidence(log, 'a');
+    expect(sheet(log).skills.python!.xp).toBe(80);
+    play(log, (g) => must(undoQuest(g, 'test', 'a', tick())));
+    expect(sheet(log).skills.python!.xp).toBe(20);
+    play(log, (g) => must(completeQuest(g, testClass, 'a', undefined, tick())));
+    expect(sheet(log).skills.python!.xp).toBe(80);
+  });
+
+  it('duplicate completion does not double-credit', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    log.push({ ...lastCompletion(log), id: 'dup-1', at: tick().now });
+    expect(sheet(log).skills.python!.xp).toBe(60);
+  });
+
+  it('old events without skills fall back to the quest tags', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    delete (lastCompletion(log) as { skills?: string[] }).skills;
+    expect(sheet(log).skills.python!.xp).toBe(60);
+  });
+
+  it('snapshot wins over current tags', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    (lastCompletion(log) as { skills?: string[] }).skills = ['ml'];
+    const g = sheet(log);
+    expect(g.skills.ml!.xp).toBe(60);
+    expect(g.skills.python).toBeUndefined();
+  });
+
+  it('unknown skill ids do not crash', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    (lastCompletion(log) as { skills?: string[] }).skills = ['zig'];
+    const g = sheet(log);
+    expect(g.skills.zig!.areaId).toBe('other');
+    expect(g.areas.other!.xp).toBe(60);
+  });
+
+  it('untagged quests change nothing', () => {
+    const untagged = { ...testClass, quests: testClass.quests.map((q) => (q.id === 'a' ? { ...q, skills: [] } : q)) };
+    const log: Log = [];
+    log.push(must(addEvidence(deriveGame([untagged], log), 'test', 'a', { kind: 'text', value: 'done' }, tick())));
+    log.push(must(completeQuest(deriveGame([untagged], log), untagged, 'a', undefined, tick())));
+    expect(Object.keys(sheet(log, [untagged]).skills)).toEqual([]);
+  });
+
+  it('no catalog, no crash', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    const plain = deriveGame(classes, log);
+    expect(plain.classes).toEqual(sheet(log).classes);
+    expect(plain.skills.python!.areaId).toBe('other');
   });
 });

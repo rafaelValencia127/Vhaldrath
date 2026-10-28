@@ -1,6 +1,7 @@
 import { levelFor, MAP_PROGRESS_CAP } from './economy';
 import { sortEvents } from './events';
-import type { ClassDef, Evidence, GameEvent, QuestDef } from './schema';
+import type { ClassDef, Evidence, GameEvent, QuestDef, SkillCatalog } from './schema';
+import { buildSkills, emptyCatalog, type AreaState, type SkillState } from './skills';
 
 export type QuestStatus = 'locked' | 'available' | 'in_progress' | 'completed';
 
@@ -56,6 +57,8 @@ export interface ClassState {
 export interface GameState {
   profile: { name: string };
   classes: Record<string, ClassState>;
+  skills: Record<string, SkillState>;
+  areas: Record<string, AreaState>;
   lastActivityAt?: string;
 }
 
@@ -66,7 +69,7 @@ interface Working {
   creditedHours: number;
   sessions: SessionItem[];
   evidence: EvidenceItem[];
-  completion?: { at: string; xp: number; gold: number; stats: Record<string, number>; notes?: string };
+  completion?: { at: string; xp: number; gold: number; stats: Record<string, number>; notes?: string; skills: string[] };
   everCompleted: boolean;
 }
 
@@ -88,11 +91,19 @@ function working(cw: ClassWorking, questId: string): Working {
 
 // Replays the event log against the class definitions. Invalid events (e.g. a duplicate
 // completion from another device) are skipped, so the result is always consistent.
-export function deriveGame(classes: readonly ClassDef[], events: readonly GameEvent[]): GameState {
+export function deriveGame(classes: readonly ClassDef[], events: readonly GameEvent[], catalog: SkillCatalog = emptyCatalog): GameState {
   const defs = new Map(classes.map((c) => [c.id, c]));
   const work = new Map<string, ClassWorking>();
   const profile = { name: DEFAULT_NAME };
   let lastActivityAt: string | undefined;
+  // Session XP per skill is permanent; completion XP is added after the replay so undo removes it.
+  const skillXp = new Map<string, number>();
+  const credit = (tags: readonly string[], xp: number) => {
+    for (const tag of tags) skillXp.set(tag, (skillXp.get(tag) ?? 0) + xp);
+  };
+  // Events recorded before skills existed carry no snapshot: use the quest's current tags.
+  const tagsOf = (e: { classId: string; questId: string; skills?: string[] }) =>
+    e.skills ?? defs.get(e.classId)?.quests.find((q) => q.id === e.questId)?.skills ?? [];
 
   const cwFor = (classId: string) => {
     let cw = work.get(classId);
@@ -120,6 +131,7 @@ export function deriveGame(classes: readonly ClassDef[], events: readonly GameEv
         w.hours += e.hours;
         cw.timeXp += credited * e.xpPerHour;
         cw.timeGold += credited * e.goldPerHour;
+        credit(tagsOf(e), credited * e.xpPerHour);
         w.sessions.push({ id: e.id, at: e.at, hours: e.hours, note: e.note });
         break;
       }
@@ -133,7 +145,7 @@ export function deriveGame(classes: readonly ClassDef[], events: readonly GameEv
         if (w.completion || w.evidence.length === 0) break;
         const quest = defs.get(e.classId)?.quests.find((q) => q.id === e.questId);
         if (quest && !quest.prerequisites.every((p) => isCompleted(cw, p))) break;
-        w.completion = { at: e.at, xp: e.xp, gold: e.gold, stats: e.stats, notes: e.notes };
+        w.completion = { at: e.at, xp: e.xp, gold: e.gold, stats: e.stats, notes: e.notes, skills: tagsOf(e) };
         w.everCompleted = true;
         break;
       }
@@ -145,7 +157,9 @@ export function deriveGame(classes: readonly ClassDef[], events: readonly GameEv
 
   const result: Record<string, ClassState> = {};
   for (const def of classes) result[def.id] = buildClass(def, cwFor(def.id));
-  return { profile, classes: result, lastActivityAt };
+  // Iterate the working state, not the definitions, so XP from removed classes survives.
+  for (const cw of work.values()) for (const w of cw.quests.values()) if (w.completion) credit(w.completion.skills, w.completion.xp);
+  return { profile, classes: result, ...buildSkills(catalog, skillXp), lastActivityAt };
 }
 
 function buildClass(def: ClassDef, cw: ClassWorking): ClassState {
