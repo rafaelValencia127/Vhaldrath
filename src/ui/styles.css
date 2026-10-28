@@ -63,6 +63,7 @@ h1, h2, h3, .display { font-family: var(--font-display); font-weight: 600; lette
   border-radius: var(--radius);
   padding: 8px 14px;
   background: var(--dusk);
+  color: var(--text);
   box-shadow: inset 0 -3px 0 #0006, 2px 2px 0 #000a;
   cursor: pointer;
   transition: transform 80ms;
@@ -72,6 +73,7 @@ h1, h2, h3, .display { font-family: var(--font-display); font-weight: 600; lette
 .btn-gold { background: var(--gold); color: #2b1b00; }
 .btn-fel { background: var(--fel); color: #0e2a0a; }
 .btn-ghost { background: transparent; border-color: var(--rim); box-shadow: none; }
+.parchment .btn-ghost { color: var(--parchment-ink); border-color: var(--parchment-rim); }
 .btn-danger { background: var(--ember); color: #2b0700; }
 .btn-sm { padding: 4px 10px; font-size: 14px; }
 
