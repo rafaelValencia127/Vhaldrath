@@ -30,6 +30,7 @@ Reward shop and boss rewards UI (gold is earned and stored from day 1), class-fi
 ## Decided by Rafael
 
 - Classes like RPG classes: own level, stats, chapters and quests per class; shared character identity.
+- 2026-10-28: levels and titles moved from classes to global, uncapped skills driven by quest tags; classes no longer show a level or title. See `2026-10-28-skills-and-growth-design.md`.
 - Stack: Vite + React + TypeScript (not Next.js — no server rendering needed and SSR fights browser storage).
 - Supabase with Google login for cross-device sync.
 - Earned XP is permanent: removing a completed quest or a whole class never removes XP.
