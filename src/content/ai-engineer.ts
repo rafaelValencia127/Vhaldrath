@@ -69,6 +69,52 @@ const rows: Row[] = [
   [36, CH.c5, 'CHA', 'BOSS: rehearse 2 system design interviews; tailor CV and start applying.', 'Written reflection on both rehearsals plus the tailored CV (file) and a count of applications sent.', []],
 ];
 
+// Skills each week trains (ids from src/content/skills.ts).
+const TAGS: Record<number, string[]> = {
+  1: ['python', 'testing'],
+  2: ['python', 'docs'],
+  3: ['python', 'apis', 'testing'],
+  4: ['python', 'data'],
+  5: ['python', 'ml'],
+  6: ['ml', 'data'],
+  7: ['ml'],
+  8: ['ml', 'docs'],
+  9: ['python', 'apis', 'ml', 'testing'],
+  10: ['llm', 'apis'],
+  11: ['llm', 'ml'],
+  12: ['llm', 'data'],
+  13: ['llm', 'data'],
+  14: ['llm', 'ml'],
+  15: ['llm', 'security'],
+  16: ['llm', 'apis'],
+  17: ['apis', 'security'],
+  18: ['llm', 'architecture', 'docs'],
+  19: ['cloud', 'devops'],
+  20: ['cloud', 'security'],
+  21: ['cloud', 'security'],
+  22: ['cloud', 'devops'],
+  23: ['cloud', 'devops'],
+  24: ['devops', 'security'],
+  25: ['devops', 'docs'],
+  26: ['cloud', 'architecture', 'docs'],
+  27: ['mlops', 'data'],
+  28: ['mlops'],
+  29: ['mlops', 'data'],
+  30: ['mlops', 'devops'],
+  31: ['mlops'],
+  32: ['mlops', 'apis', 'testing'],
+  33: ['mlops'],
+  34: ['mlops', 'architecture', 'docs'],
+  35: ['english', 'docs', 'architecture'],
+  36: ['english'],
+};
+
+function tagsFor(week: number): string[] {
+  const tags = TAGS[week];
+  if (!tags) throw new Error(`Missing skill tags for week ${week}`);
+  return tags;
+}
+
 const id = (week: number) => `week-${String(week).padStart(2, '0')}`;
 
 export const aiEngineerClass: ClassDef = classSchema.parse({
@@ -111,6 +157,7 @@ export const aiEngineerClass: ClassDef = classSchema.parse({
     acceptance: title.replace(/^BOSS: /, ''),
     evidenceHint,
     resources,
+    skills: tagsFor(week),
   })),
 });
 
