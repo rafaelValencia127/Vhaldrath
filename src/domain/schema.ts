@@ -38,7 +38,38 @@ export const questSchema = z.object({
   acceptance: z.string().min(1),
   evidenceHint: z.string().min(1),
   resources: z.array(resourceSchema),
+  // Skill ids this quest trains; each one receives the quest's full XP.
+  skills: z.array(z.string().min(1)).default([]),
 });
+
+// Skills are global (shared by every class); areas group them on the character sheet.
+export const areaSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+});
+
+export const skillSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  areaId: z.string().min(1),
+});
+
+export const skillTitleSchema = z.object({
+  skillId: z.string().min(1),
+  level: z.number().int().positive(),
+  title: z.string().min(1),
+});
+
+export const skillCatalogSchema = z.object({
+  areas: z.array(areaSchema),
+  skills: z.array(skillSchema),
+  titles: z.array(skillTitleSchema),
+});
+
+export type AreaDef = z.infer<typeof areaSchema>;
+export type SkillDef = z.infer<typeof skillSchema>;
+export type SkillTitleDef = z.infer<typeof skillTitleSchema>;
+export type SkillCatalog = z.infer<typeof skillCatalogSchema>;
 
 export const titleSchema = z.object({
   level: z.number().int().positive(),

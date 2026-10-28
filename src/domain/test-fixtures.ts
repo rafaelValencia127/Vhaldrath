@@ -42,6 +42,7 @@ function q(id: string, chapterId: string, prerequisites: string[], stat: string,
     acceptance: 'Do it',
     evidenceHint: 'Link',
     resources: [],
+    skills: [],
   };
 }
 
