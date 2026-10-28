@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { builtInClasses } from '../content/ai-engineer';
+import { builtInCatalog } from '../content/skills';
 import type { CommandResult } from '../domain/commands';
 import { newEventContext, type EventContext } from '../domain/events';
 import type { GameEvent } from '../domain/schema';
@@ -45,7 +46,7 @@ function readMotionPref(): boolean {
 }
 
 export function ServicesProvider({ children }: { children: ReactNode }) {
-  const store = useMemo(() => new GameStore(builtInClasses, window.localStorage), []);
+  const store = useMemo(() => new GameStore(builtInClasses, window.localStorage, builtInCatalog), []);
   const sync = useMemo(() => new SyncEngine(store, null, () => navigator.onLine), [store]);
   const [session, setSession] = useState<Session | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aiEngineerClass } from '../content/ai-engineer';
 import { addEvidence, completeQuest, logSession } from '../domain/commands';
 import { exportBackup, importBackup, SAVE_KEY } from '../infra/local-save';
+import { builtInCatalog } from '../content/skills';
 import { memoryStorage, GameStore } from './store';
 
 const ctx = (n: number) => ({ id: `id-${n}`, now: new Date(Date.UTC(2026, 9, 20, 10, n)).toISOString() });
@@ -87,5 +88,19 @@ describe('JSON backup', () => {
     const r = importBackup(JSON.stringify({ app: 'other', version: 1, events: [] }), []);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/not a My Life as RPG backup/);
+  });
+});
+
+describe('skills through the store', () => {
+  it('derives skill XP with the catalog and keeps it after a reload', () => {
+    const storage = memoryStorage();
+    const store = new GameStore([aiEngineerClass], storage, builtInCatalog);
+    store.append(must(addEvidence(store.getSnapshot().game, 'ai-engineer', 'week-01', { kind: 'text', value: 'pytest green' }, ctx(1))));
+    store.append(must(completeQuest(store.getSnapshot().game, aiEngineerClass, 'week-01', undefined, ctx(2))));
+    for (const game of [store.getSnapshot().game, new GameStore([aiEngineerClass], storage, builtInCatalog).getSnapshot().game]) {
+      expect(game.skills.python!.xp).toBe(60);
+      expect(game.skills.testing!.xp).toBe(60);
+      expect(game.areas.engineering!.xp).toBe(120);
+    }
   });
 });

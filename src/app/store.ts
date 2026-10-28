@@ -1,6 +1,7 @@
 import { deriveGame, type GameState } from '../domain/derive';
 import { mergeEvents } from '../domain/events';
-import type { ClassDef, GameEvent } from '../domain/schema';
+import type { ClassDef, GameEvent, SkillCatalog } from '../domain/schema';
+import { emptyCatalog } from '../domain/skills';
 import { loadSave, writeSave, type KeyValueStorage } from '../infra/local-save';
 
 export type SyncStatus = 'local-only' | 'signed-out' | 'syncing' | 'synced' | 'pending' | 'offline' | 'error';
@@ -22,6 +23,7 @@ export class GameStore {
   constructor(
     readonly classes: readonly ClassDef[],
     private storage: KeyValueStorage,
+    private catalog: SkillCatalog = emptyCatalog,
   ) {
     const { data, warning } = loadSave(storage);
     this.events = data.events;
@@ -70,7 +72,7 @@ export class GameStore {
 
   private build(): Snapshot {
     return {
-      game: deriveGame(this.classes, this.events),
+      game: deriveGame(this.classes, this.events, this.catalog),
       events: this.events,
       pendingCount: this.events.filter((e) => !this.syncedIds.has(e.id)).length,
     };
