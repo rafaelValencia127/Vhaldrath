@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useServices } from '../app/services';
+import type { SkillLevelUp } from '../domain/skills';
 import { Modal, Sprite } from './components';
 
 export interface CelebrationData {
@@ -8,9 +9,8 @@ export interface CelebrationData {
   xp: number;
   gold: number;
   stats: Record<string, number>;
-  levelBefore: number;
-  levelAfter: number;
-  newTitle?: string;
+  skillGains: { name: string; xp: number }[];
+  skillLevelUps: SkillLevelUp[];
   unlockedChapter?: string;
 }
 
@@ -32,7 +32,6 @@ export function Celebration({ data, onClose }: { data: CelebrationData; onClose:
     return () => clearTimeout(id);
   }, [data.boss, onClose]);
 
-  const levelUp = data.levelAfter > data.levelBefore;
   return (
     <>
       {!reduceMotion &&
@@ -53,13 +52,18 @@ export function Celebration({ data, onClose }: { data: CelebrationData; onClose:
               +{v} {k}
             </span>
           ))}
+          {data.skillGains.map((s) => (
+            <span key={s.name}>
+              +{s.xp} {s.name}
+            </span>
+          ))}
         </div>
-        {levelUp && (
-          <p className="display" style={{ margin: 0, color: 'var(--fel)', fontSize: 22 }}>
-            ▲ Level {data.levelAfter}
-            {data.newTitle ? ` — new title: ${data.newTitle}` : ''}
+        {data.skillLevelUps.map((u) => (
+          <p key={u.skillId} className="display" style={{ margin: 0, color: 'var(--fel)', fontSize: 22 }}>
+            ▲ {u.name} Lv {u.level}
+            {u.title ? ` — new title: ${u.title}` : ''}
           </p>
-        )}
+        ))}
         {data.unlockedChapter && <p style={{ margin: 0 }}>The fog lifts: {data.unlockedChapter} is open.</p>}
         <button className="btn btn-gold" onClick={onClose}>
           {data.boss ? 'Onward, champion' : 'Continue'}

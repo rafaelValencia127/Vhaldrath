@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGame, useServices } from '../app/services';
 import { Celebration, type CelebrationData } from './Celebration';
-import { SyncChip, XpBar } from './components';
+import { SyncChip } from './components';
 import { WorldMap } from './map/WorldMap';
 import { QuestDrawer } from './QuestDrawer';
 import { navigate } from './router';
@@ -34,8 +34,9 @@ export function ClassView({ classId, questId }: { classId: string; questId?: str
         <h1 style={{ fontSize: 20 }}>
           {def.icon} {def.name}
         </h1>
-        <span className="level-badge">Lv {cls.level}</span>
-        <XpBar into={cls.xpIntoLevel} of={cls.xpForNextLevel} label={cls.title ?? 'Apprentice'} />
+        <span className="chip">
+          {cls.completedCount}/{def.quests.length} quests
+        </span>
         <span className="chip">🪙 {Math.floor(cls.gold)}</span>
         <SyncChip />
       </header>

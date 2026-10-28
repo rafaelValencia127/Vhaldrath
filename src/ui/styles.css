@@ -223,3 +223,13 @@ h1, h2, h3, .display { font-family: var(--font-display); font-weight: 600; lette
   .hud { gap: 8px; }
   .drawer { padding: 16px; }
 }
+
+/* Character sheet: areas with their skills (only those that earned XP). */
+.sheet { margin-top: 16px; }
+.sheet-areas { display: grid; gap: 16px; margin-top: 10px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.sheet-area h3 { font-size: 16px; margin-bottom: 6px; color: var(--gold); }
+.sheet-skill { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; margin-bottom: 8px; }
+.sheet-skill .xp { grid-column: 1 / -1; }
+.sheet-skill .chip { grid-column: 1 / -1; justify-self: start; }
+.sheet-skill-name { font-family: var(--font-display); }
+.sheet-skill-level { color: var(--gold); font-family: var(--font-display); }

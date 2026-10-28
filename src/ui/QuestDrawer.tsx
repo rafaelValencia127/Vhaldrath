@@ -3,6 +3,7 @@ import { useGame, useServices } from '../app/services';
 import { addEvidence, completeQuest, logSession, removeEvidence, undoQuest } from '../domain/commands';
 import { completionReward, questGold, timeRates } from '../domain/economy';
 import type { ClassDef } from '../domain/schema';
+import { levelUps } from '../domain/skills';
 import { validateEvidenceFile } from '../infra/supabase';
 import { Confirm } from './components';
 import type { CelebrationData } from './Celebration';
@@ -79,9 +80,13 @@ export function QuestDrawer({ def, questId, onClose, onCelebrate }: { def: Class
   const credited = Math.min(qs.hours, rates.hourCap);
 
   const log = (hours: number) => {
+    const beforeGame = store.getSnapshot().game;
     const ev = run((ctx) => logSession(store.getSnapshot().game, def, questId, hours, sessionNote, ctx));
     if (ev) {
       toast('success', `+${formatHours(ev.hours)} logged · the Warlock walks on`);
+      for (const u of levelUps(beforeGame, store.getSnapshot().game)) {
+        toast('success', `${u.name} reached level ${u.level}${u.title ? ` · new title: ${u.title}` : ''}`);
+      }
       setManualHours('');
       setSessionNote('');
     }
@@ -125,10 +130,12 @@ export function QuestDrawer({ def, questId, onClose, onCelebrate }: { def: Class
 
   const doComplete = () => {
     setConfirm(null);
-    const before = store.getSnapshot().game.classes[def.id]!;
+    const beforeGame = store.getSnapshot().game;
+    const before = beforeGame.classes[def.id]!;
     const ev = run((ctx) => completeQuest(store.getSnapshot().game, def, questId, notes, ctx));
     if (!ev) return;
-    const after = store.getSnapshot().game.classes[def.id]!;
+    const afterGame = store.getSnapshot().game;
+    const after = afterGame.classes[def.id]!;
     const nextChapter = def.chapters[def.chapters.findIndex((c) => c.id === chapter.id) + 1];
     onCelebrate({
       questTitle: quest.title,
@@ -136,9 +143,8 @@ export function QuestDrawer({ def, questId, onClose, onCelebrate }: { def: Class
       xp: ev.xp,
       gold: ev.gold,
       stats: ev.stats,
-      levelBefore: before.level,
-      levelAfter: after.level,
-      newTitle: after.title !== before.title ? after.title : undefined,
+      skillGains: (ev.skills ?? []).map((tag) => ({ name: afterGame.skills[tag]?.name ?? tag, xp: ev.xp })),
+      skillLevelUps: levelUps(beforeGame, afterGame),
       unlockedChapter: quest.boss && nextChapter && before.chapters[nextChapter.id]?.fogged && !after.chapters[nextChapter.id]?.fogged ? nextChapter.name : undefined,
     });
     onClose();

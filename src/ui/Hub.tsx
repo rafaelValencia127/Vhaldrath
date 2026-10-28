@@ -1,6 +1,7 @@
 import { useGame, useServices } from '../app/services';
 import { navigate } from './router';
-import { Sprite, SyncChip, XpBar } from './components';
+import { CharacterSheet } from './CharacterSheet';
+import { Sprite, SyncChip } from './components';
 
 const WELCOME_BACK_DAYS = 7;
 
@@ -51,6 +52,8 @@ export function Hub() {
         </div>
       )}
 
+      <CharacterSheet />
+
       <div className="hub-grid">
         {store.classes.map((def) => {
           const c = game.classes[def.id]!;
@@ -64,11 +67,8 @@ export function Hub() {
                 </span>
                 <div style={{ flex: 1 }}>
                   <h2>{def.name}</h2>
-                  <span className="muted">{c.title ?? 'Apprentice'}</span>
                 </div>
-                <span className="level-badge">Lv {c.level}</span>
               </header>
-              <XpBar into={c.xpIntoLevel} of={c.xpForNextLevel} label={`To level ${c.level + 1}`} />
               <div className="row muted" style={{ fontSize: 14 }}>
                 <span>
                   {Math.floor(c.xp)} XP total · 🪙 {Math.floor(c.gold)} gold · {c.completedCount}/{def.quests.length} quests
