@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { addEvidence, completeQuest, logSession, removeEvidence, undoQuest, updateProfile } from './commands';
 import { deriveGame } from './derive';
 import { mergeEvents } from './events';
+import { eventSchema } from './schema';
 import { must, resetClock, testClass, tick, type Log } from './test-fixtures';
 
 const classes = [testClass];
@@ -234,5 +235,35 @@ describe('merging devices', () => {
     expect(m1.map((e) => e.id)).toEqual(m2.map((e) => e.id));
     expect(m1).toHaveLength(shared.length + 2);
     expect(deriveGame(classes, m1).classes.test!.quests.b!.hours).toBe(5);
+  });
+});
+
+describe('skill snapshots', () => {
+  it('logSession snapshots the quest tags', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    const ev = must(logSession(deriveGame(classes, log), testClass, 'b', 2, undefined, tick()));
+    expect(ev.skills).toEqual(['python', 'ml']);
+  });
+
+  it('completeQuest snapshots the quest tags', () => {
+    const log: Log = [];
+    completeWithEvidence(log, 'a');
+    completeWithEvidence(log, 'b');
+    completeWithEvidence(log, 'boss1');
+    const done = log.filter((e) => e.type === 'quest_completed').at(-1)!;
+    expect(done.type === 'quest_completed' && done.skills).toEqual(['ml']);
+  });
+
+  it('quests without tags leave the field out', () => {
+    const untagged = { ...testClass, quests: testClass.quests.map((q) => (q.id === 'a' ? { ...q, skills: [] } : q)) };
+    const ev = must(logSession(deriveGame([untagged], []), untagged, 'a', 1, undefined, tick()));
+    expect('skills' in ev).toBe(false);
+  });
+
+  it('old events still validate', () => {
+    const old = { id: 'x1', at: '2026-10-20T10:00:00.000Z', type: 'quest_completed', classId: 'test', questId: 'a', xp: 60, gold: 30, stats: {} };
+    expect(eventSchema.safeParse(old).success).toBe(true);
+    expect(eventSchema.safeParse({ ...old, skills: [''] }).success).toBe(false);
   });
 });

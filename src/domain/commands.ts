@@ -1,13 +1,18 @@
 import { completionReward, timeRates } from './economy';
 import type { GameState } from './derive';
 import type { EventContext } from './events';
-import { LINK_PATTERN, type ClassDef, type EventOf, type Evidence } from './schema';
+import { LINK_PATTERN, type ClassDef, type EventOf, type Evidence, type QuestDef } from './schema';
 
 // Commands validate intent against the current state and return the event to append.
 export type CommandResult<T> = { ok: true; event: T } | { ok: false; error: string };
 
 const fail = (error: string) => ({ ok: false as const, error });
 const ok = <T>(event: T) => ({ ok: true as const, event });
+
+// Snapshot the credited skills so later tag edits never rewrite earned XP.
+function skillsOf(quest: QuestDef) {
+  return quest.skills.length > 0 ? { skills: [...quest.skills] } : {};
+}
 
 function questOf(state: GameState, classId: string, questId: string) {
   return state.classes[classId]?.quests[questId];
@@ -36,6 +41,7 @@ export function logSession(
     hours: Math.round(hours * 100) / 100,
     ...(trimmed ? { note: trimmed } : {}),
     ...timeRates(quest),
+    ...skillsOf(quest),
   });
 }
 
@@ -89,6 +95,7 @@ export function completeQuest(
     questId,
     ...completionReward(quest, def.stats.map((s) => s.id)),
     ...(trimmed ? { notes: trimmed } : {}),
+    ...skillsOf(quest),
   });
 }
 

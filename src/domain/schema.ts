@@ -126,6 +126,9 @@ export const evidenceSchema = z
   .refine((e) => e.kind !== 'link' || LINK_PATTERN.test(e.value), { message: 'Links must start with http:// or https://' });
 export type Evidence = z.infer<typeof evidenceSchema>;
 
+// Skill ids credited by an event. Missing on events recorded before skills existed.
+const creditedSkills = z.array(z.string().min(1)).optional();
+
 export const eventSchema = z.discriminatedUnion('type', [
   z.object({
     ...base,
@@ -137,6 +140,7 @@ export const eventSchema = z.discriminatedUnion('type', [
     xpPerHour: z.number().nonnegative(),
     goldPerHour: z.number().nonnegative(),
     hourCap: z.number().positive(),
+    skills: creditedSkills,
   }),
   z.object({
     ...base,
@@ -161,6 +165,7 @@ export const eventSchema = z.discriminatedUnion('type', [
     gold: z.number().nonnegative(),
     stats: z.record(z.string(), z.number()),
     notes: z.string().optional(),
+    skills: creditedSkills,
   }),
   z.object({
     ...base,
