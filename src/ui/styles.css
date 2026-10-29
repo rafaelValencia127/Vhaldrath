@@ -201,10 +201,10 @@ h1, h2, h3, .display { font-family: var(--font-display); font-weight: 600; lette
 .celebrate .big { font-size: clamp(28px, 6vw, 44px); color: var(--gold); }
 .celebrate .rewards { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .celebrate .rewards span { font-family: var(--font-display); border: 2px solid #000; background: var(--dusk); padding: 4px 10px; border-radius: 3px; }
-.spark { position: fixed; width: 6px; height: 6px; background: var(--gold); z-index: 41; pointer-events: none; animation: spark 1100ms steps(10) forwards; }
+.spark { position: fixed; width: 6px; height: 6px; background: var(--gold); z-index: 41; pointer-events: none; animation: spark 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 @keyframes spark { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
-.pop { animation: pop 420ms steps(6); }
-@keyframes pop { from { transform: scale(0.6); } to { transform: scale(1); } }
+.pop { animation: pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .reduce-motion .pop, .reduce-motion .spark { animation: none; }
 .reduce-motion .spark { display: none; }
 
