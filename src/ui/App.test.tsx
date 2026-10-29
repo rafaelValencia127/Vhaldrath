@@ -91,3 +91,31 @@ describe('app smoke', () => {
     expect(screen.getByText(/Python reached level 2/)).toBeTruthy();
   });
 });
+
+describe('logging study time by hand', () => {
+  async function logTime(hours: string, minutes: string) {
+    mount();
+    await openQuest('week-01');
+    if (hours) fireEvent.change(screen.getByLabelText('Hours studied'), { target: { value: hours } });
+    if (minutes) fireEvent.change(screen.getByLabelText('Minutes studied'), { target: { value: minutes } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Log hours' }));
+    });
+  }
+
+  it('adds hours and minutes from separate boxes', async () => {
+    await logTime('1', '30');
+    expect(screen.getByText(/\+1 h 30 min logged/)).toBeTruthy();
+  });
+
+  it('accepts minutes alone', async () => {
+    await logTime('', '45');
+    expect(screen.getByText(/\+45 min logged/)).toBeTruthy();
+  });
+
+  it('rejects minutes above 59 and logs nothing', async () => {
+    await logTime('1', '75');
+    expect(screen.getByText('Minutes must be a whole number from 0 to 59.')).toBeTruthy();
+    expect(screen.queryByText(/logged · the Warlock walks on/)).toBeNull();
+  });
+});

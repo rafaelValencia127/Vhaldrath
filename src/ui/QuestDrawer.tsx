@@ -51,6 +51,7 @@ export function QuestDrawer({ def, questId, onClose, onCelebrate }: { def: Class
   const prereqNames = quest.prerequisites.map((p) => def.quests.find((q) => q.id === p)).filter(Boolean);
 
   const [manualHours, setManualHours] = useState('');
+  const [manualMinutes, setManualMinutes] = useState('');
   const [sessionNote, setSessionNote] = useState('');
   const [tab, setTab] = useState<EvidenceTab>('link');
   const [evidenceValue, setEvidenceValue] = useState('');
@@ -88,8 +89,17 @@ export function QuestDrawer({ def, questId, onClose, onCelebrate }: { def: Class
         toast('success', `${u.name} reached level ${u.level}${u.title ? ` · new title: ${u.title}` : ''}`);
       }
       setManualHours('');
+      setManualMinutes('');
       setSessionNote('');
     }
+  };
+
+  // Hours may be decimal ("1.5" or "1,5"); minutes are a separate whole number so "1:30" never needs parsing.
+  const logManual = () => {
+    const hours = manualHours.trim() ? Number(manualHours.replace(',', '.')) : 0;
+    const minutes = manualMinutes.trim() ? Number(manualMinutes) : 0;
+    if (!Number.isInteger(minutes) || minutes < 0 || minutes > 59) return toast('error', 'Minutes must be a whole number from 0 to 59.');
+    log(hours + minutes / 60);
   };
 
   const startTimer = () => {
@@ -232,8 +242,9 @@ export function QuestDrawer({ def, questId, onClose, onCelebrate }: { def: Class
               </div>
               <div className="row">
                 <input className="input" style={{ width: 110 }} inputMode="decimal" placeholder="Hours" aria-label="Hours studied" value={manualHours} onChange={(e) => setManualHours(e.target.value)} />
+                <input className="input" style={{ width: 110 }} inputMode="numeric" placeholder="Minutes" aria-label="Minutes studied" value={manualMinutes} onChange={(e) => setManualMinutes(e.target.value)} />
                 <input className="input" style={{ flex: 1, minWidth: 160 }} placeholder="What did you do? (optional)" aria-label="Session note" value={sessionNote} onChange={(e) => setSessionNote(e.target.value)} />
-                <button className="btn btn-sm" onClick={() => log(Number(manualHours.replace(',', '.')))} disabled={!manualHours}>
+                <button className="btn btn-sm" onClick={logManual} disabled={!manualHours && !manualMinutes}>
                   Log hours
                 </button>
               </div>
